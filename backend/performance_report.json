@@ -1,0 +1,30 @@
+{
+  "duration": 300,
+  "workers": 100,
+  "total_requests": 4416,
+  "success": 835,
+  "failure": 3581,
+  "endpoints": {
+    "GET_products": {
+      "count": 552,
+      "errors": 457,
+      "avg_latency_sec": 6.839,
+      "p95_latency_sec": 11.649,
+      "max_latency_sec": 13.879
+    },
+    "GET_dashboard": {
+      "count": 1317,
+      "errors": 663,
+      "avg_latency_sec": 6.033,
+      "p95_latency_sec": 11.547,
+      "max_latency_sec": 14.153
+    },
+    "POST_orders": {
+      "count": 413,
+      "errors": 327,
+      "avg_latency_sec": 6.583,
+      "p95_latency_sec": 11.19,
+      "max_latency_sec": 12.911
+    }
+  }
+}
