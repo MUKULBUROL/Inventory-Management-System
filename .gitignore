@@ -11,3 +11,5 @@ AGENTS.md
 DESIGN.md
 CLAUDE.md
 GEMINI.md
+.vscode/
+env.example
