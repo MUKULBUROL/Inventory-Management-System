@@ -91,9 +91,6 @@ function AppContent() {
       <main className="flex-1 overflow-y-auto mt-16 md:mt-0 md:ml-64 bg-gray-50 transition-all duration-300">
         {renderPage()}
       </main>
-
-      {/* React Toastify Container */}
-      <ToastContainer position="bottom-right" autoClose={4000} />
     </div>
   );
 }
@@ -102,6 +99,7 @@ function App() {
   return (
     <AuthProvider>
       <AppContent />
+      <ToastContainer position="bottom-right" autoClose={4000} />
     </AuthProvider>
   );
 }

@@ -21,6 +21,60 @@ Rather than using generic boilerplates, this project incorporates enterprise-gra
 
 ---
 
+## 🔄 Complete System & Execution Flow
+
+To understand the complete lifecycle of a request in the Quantum Inventory System, below is the end-to-end execution flow illustrating how the frontend, backend, and database interact during a critical operation (like placing an order).
+
+### 1. Order Placement & Concurrency Flow
+
+```mermaid
+sequenceDiagram
+    participant U as User (Frontend)
+    participant N as Nginx (Reverse Proxy)
+    participant API as FastAPI Backend
+    participant DB as PostgreSQL DB
+
+    U->>N: POST /api/v1/orders (Payload: items, customer_id)
+    N->>API: Route Request to Application Server
+    API->>DB: BEGIN TRANSACTION
+    API->>DB: SELECT * FROM products WHERE id IN (...) FOR UPDATE
+    DB-->>API: Return locked product rows
+    alt Stock Available
+        API->>DB: INSERT INTO orders (customer_id, status)
+        API->>DB: INSERT INTO order_items (order_id, product_id, quantity, price)
+        API->>DB: UPDATE products SET quantity = quantity - requested WHERE id = ...
+        DB-->>API: Success (CHECK constraints passed)
+        API->>DB: COMMIT
+        API-->>N: 201 Created (Order Receipt)
+        N-->>U: Success Response & UI Update
+    else Out of Stock
+        API->>DB: ROLLBACK
+        API-->>N: 400 Bad Request (Insufficient Stock)
+        N-->>U: Display Error Toast
+    end
+```
+
+### 2. Containerization & Orchestration Flow
+
+```mermaid
+graph TD
+    subgraph Docker Compose Environment
+        Nginx[Nginx Proxy :80]
+        API[FastAPI Backend :8000]
+        DB[(PostgreSQL :5432)]
+        Frontend[React Vite :5173]
+    end
+    
+    User[Client Browser] -->|Static Files / UI| Frontend
+    User -->|API Calls /api/v1| Nginx
+    Nginx -->|Reverse Proxy| API
+    API -->|Read/Write / Transactions| DB
+```
+
+This ensures zero downtime and complete isolation of services, with Nginx acting as the primary gatekeeper for production traffic.
+
+---
+
 ## 🛠️ Quick Start (Local Development)
 
 To run the application with **hot-reloading enabled**:

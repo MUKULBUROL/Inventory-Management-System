@@ -25,8 +25,9 @@ class OrderService:
         order_items = []
 
         try:
-            # 2. Iterate and process each product item (Locking row by row)
-            for item in order_data.items:
+            # 2. Iterate and process each product item (Locking row by row, sorted to prevent deadlocks)
+            sorted_items = sorted(order_data.items, key=lambda x: str(x.product_id))
+            for item in sorted_items:
                 # SELECT ... FOR UPDATE locks the product row until the transaction commits or rolls back
                 product = db.query(Product).filter(Product.id == item.product_id).with_for_update().first()
                 

@@ -11,6 +11,8 @@ from app.schemas.product import ProductResponse
 
 from app.api import deps
 
+from app.core.database import SessionLocal
+
 router = APIRouter(prefix="/dashboard", tags=["Dashboard"], dependencies=[Depends(deps.get_current_user)])
 
 @router.get("", response_model=Dict[str, Any])

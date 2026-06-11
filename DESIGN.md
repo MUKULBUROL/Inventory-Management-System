@@ -714,6 +714,75 @@ The brand uses STACKED shadows — multiple small offsets layered to fake natura
 **`ex-toast`** — Toast notification surface — feature-card shape + medium shadow.
 - Properties: `backgroundColor`, `rounded`, `padding`, `typography`
 
+---
+
+## 🔄 Complete User Interaction & Visual Flow
+
+The design system dictates not just the static appearance of elements, but how a user flows through the application visually and interactively.
+
+### 1. Page Navigation & Reading Flow
+
+```mermaid
+graph TD
+    A[Global Nav Bar] -->|Sticky Top| B("Hero Mesh Gradient Band")
+    B -->|High Contrast Lead| C("Feature Cards / Content")
+    C -->|Polarity Flipped Band| D("Dark Mode Showcase")
+    D -->|Footer| E("Links & Meta")
+```
+
+- **Top-Down Rhythm**: Users enter at the sticky `nav-bar` (`{colors.canvas}`). The eye is immediately drawn to the `hero-band` featuring the multi-stop mesh gradient — the highest visual weight on the page.
+- **Contrast Pacing**: The flow introduces alternating light and dark bands (`showcase-band-light` to `showcase-band-dark`). This polarity-flipping acts as an anchor point, resetting the user's attention.
+- **Termination**: The flow ends at the 4-column footer, strictly using mono-captions and subdued body text to gracefully close the interaction.
+
+### 2. Form & Authentication Flow
+
+```mermaid
+sequenceDiagram
+    participant User
+    participant UI as Form Surface
+    participant Sys as System / Toast
+
+    User->>UI: Clicks "Sign Up" or "Log In"
+    UI-->>User: Renders Modal (`ex-modal-card` with Level 5 shadow)
+    User->>UI: Enters Credentials in `form-input`
+    alt Validation Passed
+        UI->>Sys: Submit
+        Sys-->>User: Closes Modal, Redirects, Success Toast
+    else Validation Failed
+        UI->>Sys: Submit
+        Sys-->>UI: Highlight `form-input` with `{colors.error}`
+        Sys-->>User: Display Toast (`ex-toast` Level 4 shadow) with error
+    end
+```
+
+### 3. Responsive Collapse Flow
+
+```mermaid
+stateDiagram-v2
+    [*] --> Desktop: > 960px
+    Desktop --> Tablet: 600px - 959px
+    Tablet --> Mobile: < 600px
+    
+    state Desktop {
+        [*] --> 3_Up_Grid
+        [*] --> Full_Nav_Row
+    }
+    
+    state Tablet {
+        [*] --> 2_Up_Grid
+        [*] --> Full_Nav_Row
+    }
+    
+    state Mobile {
+        [*] --> 1_Up_Stack
+        [*] --> Hamburger_Menu
+        [*] --> Tab_Horizontal_Scroll
+    }
+```
+
+- **Desktop (Ideal State)**: Multi-column layouts (3-up pricing, 5-up templates) spread comfortably.
+- **Mobile (Collapsed State)**: Elements fall back to vertical stacks. Grids become 1-up. To preserve space, pills like `tab-ghost` switch to a horizontal scrolling behavior rather than stacking.
+
 
 ## Do's and Don'ts
 

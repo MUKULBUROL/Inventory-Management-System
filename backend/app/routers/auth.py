@@ -28,7 +28,7 @@ def login_access_token(
     access_token_expires = timedelta(minutes=settings.ACCESS_TOKEN_EXPIRE_MINUTES)
     return {
         "access_token": create_access_token(
-            user.id, expires_delta=access_token_expires
+            user.id, role=user.role.value if isinstance(user.role, UserRole) else user.role, is_active=user.is_active, expires_delta=access_token_expires
         ),
         "token_type": "bearer",
     }

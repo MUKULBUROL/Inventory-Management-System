@@ -43,6 +43,8 @@ def db_session(engine):
 
 @pytest.fixture(scope="function")
 def client(db_session):
+    from app.api.deps import get_current_active_admin, get_current_user
+    from app.models.user import User, UserRole
     # Dependency override
     def override_get_db():
         try:
@@ -50,7 +52,12 @@ def client(db_session):
         finally:
             pass
             
+    def override_get_current_user():
+        return User(id=1, email="admin@example.com", role=UserRole.ADMIN, is_active=True)
+            
     app.dependency_overrides[get_db] = override_get_db
+    app.dependency_overrides[get_current_user] = override_get_current_user
+    app.dependency_overrides[get_current_active_admin] = override_get_current_user
     with TestClient(app) as test_client:
         yield test_client
     app.dependency_overrides.clear()

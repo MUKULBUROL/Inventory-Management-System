@@ -19,7 +19,6 @@ const Products = ({ addToast }) => {
   const [form, setForm] = useState({ name: '', sku: '', price: '', quantity: '' });
   const [formErrors, setFormErrors] = useState({});
   const [currentId, setCurrentId] = useState(null);
-  const [currentId, setCurrentId] = useState(null);
 
   const fetchProducts = async (search = '') => {
     setLoading(true);
@@ -141,7 +140,7 @@ const Products = ({ addToast }) => {
   };
 
   return (
-    <div>
+    <div className="p-8 bg-gray-50 min-h-screen font-sans">
       <Helmet>
         <title>Products Catalog - Quantum Inventory</title>
         <meta name="description" content="Manage your product catalog, prices, and stock levels." />

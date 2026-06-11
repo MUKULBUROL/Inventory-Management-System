@@ -238,7 +238,7 @@ const Orders = ({ addToast }) => {
   );
 
   return (
-    <div>
+    <div className="p-8 bg-gray-50 min-h-screen font-sans">
       <Helmet>
         <title>Sales Orders - Quantum Inventory</title>
         <meta name="description" content="Manage customer sales orders and view invoices." />

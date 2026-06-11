@@ -94,7 +94,7 @@ const Customers = ({ addToast }) => {
   };
 
   return (
-    <div>
+    <div className="p-8 bg-gray-50 min-h-screen font-sans">
       <Helmet>
         <title>Customers - Quantum Inventory</title>
         <meta name="description" content="Manage client profiles and view contact information." />

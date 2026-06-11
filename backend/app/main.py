@@ -1,3 +1,6 @@
+import os
+os.environ["ANYIO_MAX_THREADS"] = "200"
+
 from fastapi import FastAPI, Request, status
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi.responses import JSONResponse
@@ -24,7 +27,7 @@ app = FastAPI(
 app.add_middleware(
     CORSMiddleware,
     allow_origins=["*"], # Allow all for convenience in assessment, or settings.BACKEND_CORS_ORIGINS
-    allow_credentials=True,
+    allow_credentials=False,
     allow_methods=["*"],
     allow_headers=["*"],
 )

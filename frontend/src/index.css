@@ -29,18 +29,7 @@
     @apply p-2 rounded-md;
   }
   
-  .search-bar-container {
-    @apply mb-6;
-  }
-  .search-input-wrapper {
-    @apply relative flex items-center;
-  }
-  .search-icon {
-    @apply absolute left-3 w-5 h-5 text-gray-400;
-  }
-  .search-input {
-    @apply pl-10;
-  }
+
   
   .glass-panel {
     @apply bg-white rounded-xl shadow-sm border border-gray-100 overflow-hidden;
@@ -115,6 +104,19 @@
   }
   .form-control {
     @apply block w-full rounded-md border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500 sm:text-sm border p-2;
+  }
+  
+  .search-bar-container {
+    @apply mb-6;
+  }
+  .search-input-wrapper {
+    @apply relative flex items-center;
+  }
+  .search-icon {
+    @apply absolute left-3 w-5 h-5 text-gray-400;
+  }
+  .search-input {
+    @apply pl-10;
   }
   
   .cart-drawer-card {
