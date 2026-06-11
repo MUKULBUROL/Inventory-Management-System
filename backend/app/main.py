@@ -7,7 +7,7 @@ from fastapi.responses import JSONResponse
 from app.core.config import settings
 from app.core.database import engine
 from app.models.base import Base
-from app.routers import products, customers, orders, dashboard, auth
+from app.routers import products, customers, orders, dashboard, inventory, auth
 import structlog
 import time
 
@@ -53,6 +53,7 @@ app.include_router(customers.router, prefix=settings.API_V1_STR)
 app.include_router(orders.router, prefix=settings.API_V1_STR)
 app.include_router(dashboard.router, prefix=settings.API_V1_STR)
 app.include_router(auth.router, prefix=settings.API_V1_STR)
+app.include_router(inventory.router, prefix=settings.API_V1_STR)
 
 # Global exception handler for safety
 @app.exception_handler(Exception)

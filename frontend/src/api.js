@@ -44,4 +44,9 @@ export const dashboardApi = {
   getStats: () => apiClient.get('/dashboard').then(r => r.data),
 };
 
+export const inventoryApi = {
+  getLedger: (productId) => apiClient.get(`/inventory/events/${productId}`).then(r => r.data),
+  adjustStock: (data) => apiClient.post('/inventory/adjust', data).then(r => r.data),
+};
+
 export default apiClient;

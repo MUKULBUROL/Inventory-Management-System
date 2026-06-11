@@ -8,7 +8,6 @@ class ProductBase(BaseModel):
     name: str = Field(..., min_length=1, max_length=150)
     sku: str = Field(..., min_length=2, max_length=50)
     price: Decimal = Field(..., gt=Decimal("0.00"), decimal_places=2)
-    quantity: int = Field(..., ge=0)
 
 class ProductCreate(ProductBase):
     @field_validator('sku')
@@ -20,7 +19,6 @@ class ProductUpdate(BaseModel):
     name: Optional[str] = Field(None, min_length=1, max_length=150)
     sku: Optional[str] = Field(None, min_length=2, max_length=50)
     price: Optional[Annotated[Decimal, Field(gt=Decimal("0.00"), decimal_places=2)]] = None
-    quantity: Optional[int] = Field(None, ge=0)
 
     @field_validator('sku')
     @classmethod
@@ -31,6 +29,15 @@ class ProductUpdate(BaseModel):
 
 class ProductResponse(ProductBase):
     id: UUID
+    expected_runout_date: Optional[datetime] = None
+    recommended_reorder_quantity: Optional[int] = None
+    supplier_recommendation: Optional[str] = None
+    
+    # Computed from Ledger
+    available_stock: int = 0
+    reserved_stock: int = 0
+    in_transit_stock: int = 0
+    
     created_at: datetime
     updated_at: datetime
 

@@ -26,13 +26,22 @@ def create_product(product_in: ProductCreate, db: Session = Depends(get_db), cur
         db.add(db_product)
         db.commit()
         db.refresh(db_product)
-        return db_product
+        return populate_product_stock(db, db_product)
     except IntegrityError:
         db.rollback()
         raise HTTPException(
             status_code=status.HTTP_400_BAD_REQUEST,
             detail="Database integrity error: check constraints or SKU duplicates."
         )
+
+from app.services.inventory_service import InventoryLedgerService
+
+def populate_product_stock(db: Session, product: Product) -> dict:
+    product_dict = {c.name: getattr(product, c.name) for c in product.__table__.columns}
+    product_dict["available_stock"] = InventoryLedgerService.get_available_stock(db, product.id)
+    product_dict["reserved_stock"] = InventoryLedgerService.get_reserved_stock(db, product.id)
+    product_dict["in_transit_stock"] = 0 # Future implementation
+    return product_dict
 
 @router.get("", response_model=List[ProductResponse])
 def read_products(
@@ -48,7 +57,8 @@ def read_products(
             (Product.name.ilike(f"%{search}%")) | 
             (Product.sku.ilike(f"%{search}%"))
         )
-    return query.order_by(Product.name).offset(skip).limit(limit).all()
+    products = query.order_by(Product.name).offset(skip).limit(limit).all()
+    return [populate_product_stock(db, p) for p in products]
 
 @router.get("/{product_id}", response_model=ProductResponse)
 def read_product(product_id: UUID, db: Session = Depends(get_db), current_user = Depends(deps.get_current_user)):
@@ -58,7 +68,7 @@ def read_product(product_id: UUID, db: Session = Depends(get_db), current_user =
             status_code=status.HTTP_404_NOT_FOUND,
             detail=f"Product with ID {product_id} not found."
         )
-    return product
+    return populate_product_stock(db, product)
 
 @router.put("/{product_id}", response_model=ProductResponse)
 def update_product(product_id: UUID, product_in: ProductUpdate, db: Session = Depends(get_db), current_user = Depends(deps.get_current_active_admin)):
@@ -86,12 +96,12 @@ def update_product(product_id: UUID, product_in: ProductUpdate, db: Session = De
     try:
         db.commit()
         db.refresh(product)
-        return product
+        return populate_product_stock(db, product)
     except IntegrityError:
         db.rollback()
         raise HTTPException(
             status_code=status.HTTP_400_BAD_REQUEST,
-            detail="Database update failed due to constraint violation (e.g. quantity < 0)."
+            detail="Database update failed due to constraint violation."
         )
 
 @router.delete("/{product_id}", status_code=status.HTTP_204_NO_CONTENT)

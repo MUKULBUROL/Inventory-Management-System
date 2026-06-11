@@ -1,304 +1,275 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useRef, useEffect } from 'react';
+import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { productApi } from '../api';
-import { Plus, Search, Edit2, Trash2, X, Package, Check } from 'lucide-react';
+import { Plus, Search, Edit2, Trash2, X, Package, Activity, ArrowRightLeft } from 'lucide-react';
 import ConfirmationModal from '../components/layout/ConfirmationModal';
 import { Helmet } from 'react-helmet-async';
+import { useVirtualizer } from '@tanstack/react-virtual';
+import SkeletonLoader from '../components/SkeletonLoader';
+import AdjustStockModal from '../components/AdjustStockModal';
+import ProductLedgerModal from '../components/ProductLedgerModal';
 
 const Products = ({ addToast }) => {
-  const [products, setProducts] = useState([]);
-  const [loading, setLoading] = useState(true);
   const [searchTerm, setSearchTerm] = useState('');
-  
+  const [debouncedSearch, setDebouncedSearch] = useState('');
+  const queryClient = useQueryClient();
+
+  useEffect(() => {
+    const timer = setTimeout(() => setDebouncedSearch(searchTerm), 300);
+    return () => clearTimeout(timer);
+  }, [searchTerm]);
+
+  const { data: products = [], isLoading } = useQuery({
+    queryKey: ['products', debouncedSearch],
+    queryFn: () => productApi.getAll(debouncedSearch),
+  });
+
+  // Virtualizer Setup
+  const parentRef = useRef(null);
+  const rowVirtualizer = useVirtualizer({
+    count: products.length,
+    getScrollElement: () => parentRef.current,
+    estimateSize: () => 64, // Estimated row height
+    overscan: 10,
+  });
+
   // Modals state
   const [isCreateOpen, setIsCreateOpen] = useState(false);
   const [isEditOpen, setIsEditOpen] = useState(false);
   const [confirmDeleteOpen, setConfirmDeleteOpen] = useState(false);
-  const [productToDelete, setProductToDelete] = useState(null);
+  const [adjustStockOpen, setAdjustStockOpen] = useState(false);
+  const [ledgerOpen, setLedgerOpen] = useState(false);
   
-  // Form values
-  const [form, setForm] = useState({ name: '', sku: '', price: '', quantity: '' });
+  const [activeProduct, setActiveProduct] = useState(null);
+  
+  // Form state
+  const [form, setForm] = useState({ name: '', sku: '', price: '' });
   const [formErrors, setFormErrors] = useState({});
-  const [currentId, setCurrentId] = useState(null);
-
-  const fetchProducts = async (search = '') => {
-    setLoading(true);
-    try {
-      const data = await productApi.getAll(search);
-      setProducts(data);
-    } catch (err) {
-      addToast('Failed to fetch products.', 'error');
-    } finally {
-      setLoading(false);
-    }
-  };
-
-  useEffect(() => {
-    const delayDebounce = setTimeout(() => {
-      fetchProducts(searchTerm);
-    }, 300);
-    return () => clearTimeout(delayDebounce);
-  }, [searchTerm]);
-
-  const handleOpenCreate = () => {
-    setForm({ name: '', sku: '', price: '', quantity: '0' });
-    setFormErrors({});
-    setIsCreateOpen(true);
-  };
-
-  const handleOpenEdit = (product) => {
-    setCurrentId(product.id);
-    setForm({
-      name: product.name,
-      sku: product.sku,
-      price: product.price.toString(),
-      quantity: product.quantity.toString()
-    });
-    setFormErrors({});
-    setIsEditOpen(true);
-  };
 
   const validateForm = () => {
     const errors = {};
     if (!form.name) errors.name = 'Name is required';
     if (!form.sku) errors.sku = 'SKU is required';
-    
     const parsedPrice = parseFloat(form.price);
     if (!form.price) errors.price = 'Price is required';
-    else if (isNaN(parsedPrice) || parsedPrice <= 0) errors.price = 'Price must be a positive number';
-    
-    const parsedQty = parseInt(form.quantity, 10);
-    if (form.quantity === '') errors.quantity = 'Quantity is required';
-    else if (isNaN(parsedQty) || parsedQty < 0) errors.quantity = 'Quantity cannot be negative';
-    
+    else if (isNaN(parsedPrice) || parsedPrice <= 0) errors.price = 'Price must be positive';
     setFormErrors(errors);
     return Object.keys(errors).length === 0;
   };
 
-  const handleCreateSubmit = async (e) => {
-    e.preventDefault();
-    if (!validateForm()) return;
-    
-    const parsedPrice = parseFloat(form.price);
-    const parsedQty = parseInt(form.quantity, 10);
-
-    try {
-      await productApi.create({
-        name: form.name,
-        sku: form.sku,
-        price: parsedPrice,
-        quantity: parsedQty
-      });
+  const createMutation = useMutation({
+    mutationFn: (data) => productApi.create(data),
+    onSuccess: () => {
       addToast('Product created successfully!', 'success');
       setIsCreateOpen(false);
-      fetchProducts(searchTerm);
-    } catch (err) {
-      const msg = err.response?.data?.detail || 'Failed to create product.';
-      addToast(msg, 'error');
+      queryClient.invalidateQueries(['products']);
+    },
+    onError: (err) => {
+      addToast(err.response?.data?.detail || 'Failed to create product.', 'error');
     }
-  };
+  });
 
-  const handleEditSubmit = async (e) => {
-    e.preventDefault();
-    if (!validateForm()) return;
-    const parsedPrice = parseFloat(form.price);
-    const parsedQty = parseInt(form.quantity, 10);
-
-    try {
-      await productApi.update(currentId, {
-        name: form.name,
-        sku: form.sku,
-        price: parsedPrice,
-        quantity: parsedQty
-      });
+  const updateMutation = useMutation({
+    mutationFn: (data) => productApi.update(activeProduct.id, data),
+    onSuccess: () => {
       addToast('Product updated successfully!', 'success');
       setIsEditOpen(false);
-      fetchProducts(searchTerm);
-    } catch (err) {
-      const msg = err.response?.data?.detail || 'Failed to update product.';
-      addToast(msg, 'error');
+      queryClient.invalidateQueries(['products']);
+    },
+    onError: (err) => {
+      addToast(err.response?.data?.detail || 'Failed to update product.', 'error');
     }
-  };
+  });
 
-  const openDeleteConfirm = (product) => {
-    setProductToDelete(product);
-    setConfirmDeleteOpen(true);
-  };
-
-  const handleDelete = async () => {
-    if (!productToDelete) return;
-    try {
-      await productApi.delete(productToDelete.id);
+  const deleteMutation = useMutation({
+    mutationFn: (id) => productApi.delete(id),
+    onSuccess: () => {
       addToast('Product deleted successfully.', 'success');
       setConfirmDeleteOpen(false);
-      setProductToDelete(null);
-      fetchProducts(searchTerm);
-    } catch (err) {
-      const msg = err.response?.data?.detail || 'Failed to delete product.';
-      addToast(msg, 'error');
+      setActiveProduct(null);
+      queryClient.invalidateQueries(['products']);
+    },
+    onError: (err) => {
+      addToast(err.response?.data?.detail || 'Failed to delete product.', 'error');
       setConfirmDeleteOpen(false);
     }
+  });
+
+  const handleCreateSubmit = (e) => {
+    e.preventDefault();
+    if (!validateForm()) return;
+    // Initial quantity is not handled here anymore, stock adjustments via ledger
+    createMutation.mutate({
+      name: form.name,
+      sku: form.sku,
+      price: parseFloat(form.price),
+      quantity: 0 // Legacy compatibility field, but ledger handles true stock
+    });
+  };
+
+  const handleEditSubmit = (e) => {
+    e.preventDefault();
+    if (!validateForm()) return;
+    updateMutation.mutate({
+      name: form.name,
+      sku: form.sku,
+      price: parseFloat(form.price)
+    });
   };
 
   return (
-    <div className="p-8 bg-gray-50 min-h-screen font-sans">
+    <div className="p-8 max-w-[1400px] mx-auto pb-20">
       <Helmet>
-        <title>Products Catalog - Quantum Inventory</title>
-        <meta name="description" content="Manage your product catalog, prices, and stock levels." />
-        <meta property="og:title" content="Products Catalog - Quantum Inventory" />
+        <title>Products - Quantum OS</title>
       </Helmet>
+      
       <div className="page-header">
         <div className="page-title-group">
-          <h1>Product Inventory</h1>
-          <p>Add, edit, track quantities, and update catalog pricing.</p>
+          <h1>Product Catalog</h1>
+          <p>Manage items, view ledger history, and adjust stock levels.</p>
         </div>
-        <button className="btn btn-primary" onClick={handleOpenCreate}>
+        <button className="btn btn-primary" onClick={() => {
+          setForm({ name: '', sku: '', price: '' });
+          setFormErrors({});
+          setIsCreateOpen(true);
+        }}>
           <Plus size={18} />
           Add Product
         </button>
       </div>
 
-      <div className="search-bar-container">
-        <div className="search-input-wrapper">
+      <div className="search-bar-container mb-8">
+        <div className="search-input-wrapper max-w-md">
           <Search className="search-icon" />
           <input
             type="text"
-            className="form-control search-input"
-            placeholder="Search by name or SKU..."
+            className="form-control search-input bg-white"
+            placeholder="Search catalog by name or SKU (Press / to focus)"
             value={searchTerm}
             onChange={(e) => setSearchTerm(e.target.value)}
           />
         </div>
       </div>
 
-      {loading && products.length === 0 ? (
-        <div style={{ display: 'flex', justifyContent: 'center', padding: '100px 0' }}>
-          <div className="animate-spin" style={{ width: '40px', height: '40px', border: '3px solid #ebebeb', borderTopColor: 'var(--color-primary)', borderRadius: '50%' }}></div>
-        </div>
-      ) : (
-        <div className="glass-panel">
-          {products.length === 0 ? (
-            <div className="empty-state">
-              <Package size={40} style={{ color: 'var(--text-muted)' }} />
-              <div className="empty-state-title">No products found</div>
-              <div className="empty-state-subtitle">Adjust your search parameters or register a new product catalog item.</div>
-            </div>
-          ) : (
-            <div className="table-container">
-              <table className="custom-table">
-                <thead>
-                  <tr>
-                    <th>Product Name</th>
-                    <th>SKU/Code</th>
-                    <th>Price</th>
-                    <th>Stock Level</th>
-                    <th>Status</th>
-                    <th style={{ textAlign: 'right' }}>Actions</th>
-                  </tr>
-                </thead>
-                <tbody>
-                  {products.map((product) => (
-                    <tr key={product.id}>
-                      <td style={{ fontWeight: 600 }}>{product.name}</td>
-                      <td style={{ fontFamily: 'var(--font-mono)', color: 'var(--color-primary)', fontWeight: 500 }}>{product.sku}</td>
-                      <td>${parseFloat(product.price).toFixed(2)}</td>
-                      <td>{product.quantity} units</td>
-                      <td>
-                        {product.quantity === 0 ? (
+      <div className="surface-card flex flex-col min-h-[500px]">
+        {isLoading ? (
+          <div className="p-4 space-y-4">
+            <SkeletonLoader variant="table-row" />
+            <SkeletonLoader variant="table-row" />
+            <SkeletonLoader variant="table-row" />
+            <SkeletonLoader variant="table-row" />
+          </div>
+        ) : products.length === 0 ? (
+          <div className="flex-1 empty-state">
+            <Package size={48} className="text-gray-300 mb-4" />
+            <h3 className="empty-state-title">No products found</h3>
+            <p className="empty-state-subtitle">Adjust your search or add a new product to the catalog.</p>
+          </div>
+        ) : (
+          <div className="flex-1 overflow-auto rounded-xl" ref={parentRef} style={{ height: '600px' }}>
+            <table className="custom-table w-full">
+              <thead className="sticky top-0 z-10">
+                <tr>
+                  <th>Product</th>
+                  <th>SKU</th>
+                  <th>Price</th>
+                  <th>Available</th>
+                  <th>Status</th>
+                  <th className="text-right pr-8">Actions</th>
+                </tr>
+              </thead>
+              <tbody style={{ height: `${rowVirtualizer.getTotalSize()}px`, position: 'relative' }}>
+                {rowVirtualizer.getVirtualItems().map((virtualRow) => {
+                  const product = products[virtualRow.index];
+                  const isLow = product.available_stock < 10 && product.available_stock > 0;
+                  const isOut = product.available_stock <= 0;
+
+                  return (
+                    <tr 
+                      key={product.id} 
+                      className="absolute w-full flex items-center border-b border-gray-50 hover:bg-gray-50/80 transition-colors group"
+                      style={{ height: `${virtualRow.size}px`, transform: `translateY(${virtualRow.start}px)` }}
+                    >
+                      <td className="w-1/6 px-6 font-medium text-gray-900 truncate">{product.name}</td>
+                      <td className="w-1/6 px-6 font-mono text-xs text-gray-500">{product.sku}</td>
+                      <td className="w-1/6 px-6">${parseFloat(product.price).toFixed(2)}</td>
+                      <td className="w-1/6 px-6 font-semibold">{product.available_stock}</td>
+                      <td className="w-1/6 px-6">
+                        {isOut ? (
                           <span className="badge badge-danger">Out of Stock</span>
-                        ) : product.quantity < 10 ? (
+                        ) : isLow ? (
                           <span className="badge badge-warning">Low Stock</span>
                         ) : (
                           <span className="badge badge-success">Available</span>
                         )}
                       </td>
-                      <td style={{ textAlign: 'right' }}>
-                        <div style={{ display: 'inline-flex', gap: '8px' }}>
-                          <button
-                            className="btn btn-secondary btn-icon"
-                            onClick={() => handleOpenEdit(product)}
-                            title="Edit Product"
-                          >
-                            <Edit2 size={16} />
-                          </button>
-                          <button
-                            className="btn btn-danger btn-icon"
-                            onClick={() => openDeleteConfirm(product)}
-                            title="Delete Product"
-                          >
-                            <Trash2 size={16} />
-                          </button>
-                        </div>
+                      <td className="w-1/6 px-6 flex justify-end gap-2 pr-8 opacity-0 group-hover:opacity-100 transition-opacity">
+                        <button className="p-1.5 text-gray-400 hover:text-indigo-600 hover:bg-indigo-50 rounded-md transition-colors tooltip-trigger" 
+                                title="View Ledger"
+                                onClick={() => { setActiveProduct(product); setLedgerOpen(true); }}>
+                          <Activity size={16} />
+                        </button>
+                        <button className="p-1.5 text-gray-400 hover:text-emerald-600 hover:bg-emerald-50 rounded-md transition-colors tooltip-trigger" 
+                                title="Adjust Stock"
+                                onClick={() => { setActiveProduct(product); setAdjustStockOpen(true); }}>
+                          <ArrowRightLeft size={16} />
+                        </button>
+                        <button className="p-1.5 text-gray-400 hover:text-blue-600 hover:bg-blue-50 rounded-md transition-colors tooltip-trigger" 
+                                title="Edit Product"
+                                onClick={() => {
+                                  setActiveProduct(product);
+                                  setForm({ name: product.name, sku: product.sku, price: product.price.toString() });
+                                  setFormErrors({});
+                                  setIsEditOpen(true);
+                                }}>
+                          <Edit2 size={16} />
+                        </button>
+                        <button className="p-1.5 text-gray-400 hover:text-rose-600 hover:bg-rose-50 rounded-md transition-colors tooltip-trigger" 
+                                title="Delete"
+                                onClick={() => { setActiveProduct(product); setConfirmDeleteOpen(true); }}>
+                          <Trash2 size={16} />
+                        </button>
                       </td>
                     </tr>
-                  ))}
-                </tbody>
-              </table>
-            </div>
-          )}
-        </div>
-      )}
+                  );
+                })}
+              </tbody>
+            </table>
+          </div>
+        )}
+      </div>
 
       {/* CREATE MODAL */}
       {isCreateOpen && (
         <div className="modal-overlay" onClick={() => setIsCreateOpen(false)}>
-          <div className="modal-content" onClick={(e) => e.stopPropagation()}>
+          <div className="modal-content" onClick={e => e.stopPropagation()}>
             <div className="modal-header">
-              <h3 className="modal-title">Add New Product</h3>
-              <button className="modal-close" onClick={() => setIsCreateOpen(false)}>
-                <X size={20} />
-              </button>
+              <h3 className="modal-title">New Product</h3>
+              <button className="modal-close" onClick={() => setIsCreateOpen(false)}><X size={20} /></button>
             </div>
             <form onSubmit={handleCreateSubmit}>
-              <div className="form-group">
-                <label className="form-label">Product Name *</label>
-                <input
-                  type="text"
-                  className={`form-control ${formErrors.name ? 'border-red-500' : ''}`}
-                  placeholder="e.g. Ergonomic Office Chair"
-                  value={form.name}
-                  onChange={(e) => setForm({ ...form, name: e.target.value })}
-                />
-                {formErrors.name && <p className="text-red-500 text-xs mt-1">{formErrors.name}</p>}
-              </div>
-              <div className="form-group">
-                <label className="form-label">SKU/Code *</label>
-                <input
-                  type="text"
-                  className={`form-control ${formErrors.sku ? 'border-red-500' : ''}`}
-                  placeholder="e.g. CHR-402-BLK"
-                  value={form.sku}
-                  onChange={(e) => setForm({ ...form, sku: e.target.value })}
-                />
-                {formErrors.sku && <p className="text-red-500 text-xs mt-1">{formErrors.sku}</p>}
-              </div>
-              <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '16px' }}>
-                <div className="form-group">
-                  <label className="form-label">Unit Price ($) *</label>
-                  <input
-                    type="number"
-                    step="0.01"
-                    className={`form-control ${formErrors.price ? 'border-red-500' : ''}`}
-                    placeholder="299.99"
-                    value={form.price}
-                    onChange={(e) => setForm({ ...form, price: e.target.value })}
-                  />
-                  {formErrors.price && <p className="text-red-500 text-xs mt-1">{formErrors.price}</p>}
+              <div className="p-6 space-y-4">
+                <div className="form-group !px-0 !mb-0">
+                  <label className="form-label">Product Name</label>
+                  <input type="text" className={`form-control ${formErrors.name ? 'border-red-500' : ''}`} value={form.name} onChange={e => setForm({...form, name: e.target.value})} autoFocus/>
+                  {formErrors.name && <p className="text-red-500 text-xs mt-1">{formErrors.name}</p>}
                 </div>
-                <div className="form-group">
-                  <label className="form-label">Initial Quantity *</label>
-                  <input
-                    type="number"
-                    className={`form-control ${formErrors.quantity ? 'border-red-500' : ''}`}
-                    placeholder="10"
-                    value={form.quantity}
-                    onChange={(e) => setForm({ ...form, quantity: e.target.value })}
-                  />
-                  {formErrors.quantity && <p className="text-red-500 text-xs mt-1">{formErrors.quantity}</p>}
+                <div className="grid grid-cols-2 gap-4">
+                  <div className="form-group !px-0 !mb-0">
+                    <label className="form-label">SKU</label>
+                    <input type="text" className={`form-control ${formErrors.sku ? 'border-red-500' : ''}`} value={form.sku} onChange={e => setForm({...form, sku: e.target.value})}/>
+                    {formErrors.sku && <p className="text-red-500 text-xs mt-1">{formErrors.sku}</p>}
+                  </div>
+                  <div className="form-group !px-0 !mb-0">
+                    <label className="form-label">Price ($)</label>
+                    <input type="number" step="0.01" className={`form-control ${formErrors.price ? 'border-red-500' : ''}`} value={form.price} onChange={e => setForm({...form, price: e.target.value})}/>
+                    {formErrors.price && <p className="text-red-500 text-xs mt-1">{formErrors.price}</p>}
+                  </div>
                 </div>
               </div>
-              <div style={{ display: 'flex', justifyContent: 'flex-end', gap: '12px', marginTop: '24px' }}>
+              <div className="px-6 py-4 border-t border-gray-100 flex justify-end gap-3 bg-gray-50/50">
                 <button type="button" className="btn btn-secondary" onClick={() => setIsCreateOpen(false)}>Cancel</button>
-                <button type="submit" className="btn btn-primary">Create Product</button>
+                <button type="submit" className="btn btn-primary" disabled={createMutation.isLoading}>Create</button>
               </div>
             </form>
           </div>
@@ -308,80 +279,50 @@ const Products = ({ addToast }) => {
       {/* EDIT MODAL */}
       {isEditOpen && (
         <div className="modal-overlay" onClick={() => setIsEditOpen(false)}>
-          <div className="modal-content" onClick={(e) => e.stopPropagation()}>
+          <div className="modal-content" onClick={e => e.stopPropagation()}>
             <div className="modal-header">
               <h3 className="modal-title">Edit Product Details</h3>
-              <button className="modal-close" onClick={() => setIsEditOpen(false)}>
-                <X size={20} />
-              </button>
+              <button className="modal-close" onClick={() => setIsEditOpen(false)}><X size={20} /></button>
             </div>
             <form onSubmit={handleEditSubmit}>
-              <div className="form-group">
-                <label className="form-label">Product Name *</label>
-                <input
-                  type="text"
-                  className={`form-control ${formErrors.name ? 'border-red-500' : ''}`}
-                  value={form.name}
-                  onChange={(e) => setForm({ ...form, name: e.target.value })}
-                />
-                {formErrors.name && <p className="text-red-500 text-xs mt-1">{formErrors.name}</p>}
-              </div>
-              <div className="form-group">
-                <label className="form-label">SKU/Code *</label>
-                <input
-                  type="text"
-                  className={`form-control ${formErrors.sku ? 'border-red-500' : ''}`}
-                  value={form.sku}
-                  onChange={(e) => setForm({ ...form, sku: e.target.value })}
-                />
-                {formErrors.sku && <p className="text-red-500 text-xs mt-1">{formErrors.sku}</p>}
-              </div>
-              <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '16px' }}>
-                <div className="form-group">
-                  <label className="form-label">Unit Price ($) *</label>
-                  <input
-                    type="number"
-                    step="0.01"
-                    className={`form-control ${formErrors.price ? 'border-red-500' : ''}`}
-                    value={form.price}
-                    onChange={(e) => setForm({ ...form, price: e.target.value })}
-                  />
-                  {formErrors.price && <p className="text-red-500 text-xs mt-1">{formErrors.price}</p>}
+              <div className="p-6 space-y-4">
+                <div className="form-group !px-0 !mb-0">
+                  <label className="form-label">Product Name</label>
+                  <input type="text" className={`form-control ${formErrors.name ? 'border-red-500' : ''}`} value={form.name} onChange={e => setForm({...form, name: e.target.value})} autoFocus/>
                 </div>
-                <div className="form-group">
-                  <label className="form-label">Quantity in Stock *</label>
-                  <input
-                    type="number"
-                    className={`form-control ${formErrors.quantity ? 'border-red-500' : ''}`}
-                    value={form.quantity}
-                    onChange={(e) => setForm({ ...form, quantity: e.target.value })}
-                  />
-                  {formErrors.quantity && <p className="text-red-500 text-xs mt-1">{formErrors.quantity}</p>}
+                <div className="grid grid-cols-2 gap-4">
+                  <div className="form-group !px-0 !mb-0">
+                    <label className="form-label">SKU</label>
+                    <input type="text" className={`form-control ${formErrors.sku ? 'border-red-500' : ''}`} value={form.sku} onChange={e => setForm({...form, sku: e.target.value})}/>
+                  </div>
+                  <div className="form-group !px-0 !mb-0">
+                    <label className="form-label">Price ($)</label>
+                    <input type="number" step="0.01" className={`form-control ${formErrors.price ? 'border-red-500' : ''}`} value={form.price} onChange={e => setForm({...form, price: e.target.value})}/>
+                  </div>
                 </div>
               </div>
-              <div style={{ display: 'flex', justifyContent: 'flex-end', gap: '12px', marginTop: '24px' }}>
+              <div className="px-6 py-4 border-t border-gray-100 flex justify-end gap-3 bg-gray-50/50">
                 <button type="button" className="btn btn-secondary" onClick={() => setIsEditOpen(false)}>Cancel</button>
-                <button type="submit" className="btn btn-primary">Save Changes</button>
+                <button type="submit" className="btn btn-primary" disabled={updateMutation.isLoading}>Save Changes</button>
               </div>
             </form>
           </div>
         </div>
       )}
 
-      {/* CONFIRM DELETE MODAL */}
       <ConfirmationModal
         isOpen={confirmDeleteOpen}
-        title="Unregister Product?"
-        message={`Are you sure you want to delete '${productToDelete?.name}' (SKU: ${productToDelete?.sku})? This will permanently remove this item from the catalog. Note that deletion may fail if the product is already linked to previous client orders.`}
-        confirmText="Delete Catalog Item"
-        cancelText="Keep in Catalog"
-        onConfirm={handleDelete}
-        onCancel={() => {
-          setConfirmDeleteOpen(false);
-          setProductToDelete(null);
-        }}
+        title="Delete Product"
+        message={`Are you sure you want to permanently remove ${activeProduct?.name}? This action cannot be undone.`}
+        confirmText="Delete"
+        cancelText="Cancel"
+        onConfirm={() => deleteMutation.mutate(activeProduct.id)}
+        onCancel={() => setConfirmDeleteOpen(false)}
         type="danger"
       />
+
+      <AdjustStockModal isOpen={adjustStockOpen} onClose={() => setAdjustStockOpen(false)} product={activeProduct} addToast={addToast} />
+      <ProductLedgerModal isOpen={ledgerOpen} onClose={() => setLedgerOpen(false)} product={activeProduct} />
     </div>
   );
 };
