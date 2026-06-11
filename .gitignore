@@ -12,4 +12,5 @@ DESIGN.md
 CLAUDE.md
 GEMINI.md
 .vscode/
-env.example
+.env.local
+.env.*.local

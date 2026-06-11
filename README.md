@@ -75,6 +75,27 @@ This ensures zero downtime and complete isolation of services, with Nginx acting
 
 ---
 
+## 🔐 Environment Configuration
+
+Before running the application, you must configure your environment variables:
+
+1. Copy the example template to create your `.env` file:
+   ```bash
+   cp .env.example .env
+   ```
+2. Open `.env` and update the placeholder values with your actual configuration.
+
+### Required Environment Variables
+* `DB_USER`: The PostgreSQL database user (e.g., `postgres`).
+* `DB_PASSWORD`: The secure password for the database.
+* `DB_NAME`: The name of the database (e.g., `inventory`).
+
+### Development vs Production
+* **Development**: For local testing, the default values in `.env.example` are sufficient. The `docker-compose.dev.yml` file uses these to spin up local, hot-reloading containers.
+* **Production**: You **must** change `DB_PASSWORD` to a strong, cryptographically secure value. The `docker-compose.yml` configuration will securely inject these into the production instances without hardcoding them in version control.
+
+---
+
 ## 🛠️ Quick Start (Local Development)
 
 To run the application with **hot-reloading enabled**:
