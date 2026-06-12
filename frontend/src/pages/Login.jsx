@@ -27,8 +27,8 @@ const Login = ({ setCurrentPage, addToast }) => {
   return (
     <div className="flex items-center justify-center min-h-screen bg-gray-50 px-4">
       <Helmet>
-        <title>Login - Quantum Inventory</title>
-        <meta name="description" content="Sign in to your Quantum Inventory account." />
+        <title>Login - Quantum Inventory System</title>
+        <meta name="description" content="Sign in to your Quantum Inventory System account." />
       </Helmet>
       <div className="w-full max-w-md p-8 bg-white rounded-xl shadow-lg border border-gray-100">
         <div className="flex flex-col items-center mb-8">

@@ -24,6 +24,16 @@
     --input: 240 5.9% 90%;
     --ring: 240 10% 3.9%;
     --radius: 0.75rem;
+    --font-mono: "JetBrains Mono", monospace;
+    --glass-border: #ebebeb;
+    --glass-border-hover: #a1a1a1;
+    --color-primary: #171717;
+    --color-success: #0070f3;
+    --color-danger: #ee0000;
+    --color-warning: #f5a623;
+    --text-primary: #171717;
+    --text-secondary: #4d4d4d;
+    --text-muted: #888888;
   }
 }
 
@@ -125,6 +135,140 @@
   .form-control {
     @apply block w-full rounded-lg border-gray-200 shadow-sm focus:border-black focus:ring-black sm:text-sm border p-2.5 transition-colors duration-200;
   }
+
+  /* Search Input Utilities */
+  .search-input-wrapper {
+    @apply relative flex items-center w-full;
+  }
+  .search-icon {
+    @apply absolute left-3 text-gray-400 w-5 h-5 pointer-events-none;
+  }
+  .search-input {
+    @apply pl-10 w-full;
+  }
+
+  /* Premium Hover Effect */
+  .premium-hover {
+    @apply transition-all duration-300 ease-in-out;
+  }
+  .premium-hover:hover {
+    @apply -translate-y-1.5 shadow-[0_12px_40px_-12px_rgba(59,130,246,0.3)] border-blue-200/50;
+  }
+
+  /* Modal Overlay */
+  .modal-overlay {
+    @apply fixed inset-0 z-[1000] flex items-center justify-center;
+    background: rgba(0, 0, 0, 0.35);
+    backdrop-filter: blur(4px);
+    -webkit-backdrop-filter: blur(4px);
+    animation: fadeIn 0.15s ease;
+  }
+
+  /* Modal Content */
+  .modal-content {
+    @apply w-full bg-white rounded-xl shadow-2xl relative p-8;
+    max-width: 520px;
+    border: 1px solid var(--glass-border);
+    animation: slideUp 0.2s cubic-bezier(0.16, 1, 0.3, 1);
+  }
+
+  /* Modal Header */
+  .modal-header {
+    @apply flex justify-between items-center mb-6;
+  }
+
+  /* Modal Title */
+  .modal-title {
+    @apply text-xl font-semibold;
+    letter-spacing: -0.03em;
+  }
+
+  /* Modal Close Button */
+  .modal-close {
+    @apply flex items-center justify-center cursor-pointer rounded-md p-1 transition-colors;
+    background: none;
+    border: none;
+    color: var(--text-muted);
+  }
+  .modal-close:hover {
+    color: var(--text-primary);
+  }
+
+  /* Button Icon */
+  .btn-icon {
+    @apply flex-shrink-0;
+    width: 34px;
+    height: 34px;
+    padding: 0;
+    border-radius: 6px;
+  }
+
+  /* Search Bar Container */
+  .search-bar-container {
+    @apply flex gap-4 mb-6;
+  }
+
+  /* Empty State */
+  .empty-state {
+    @apply flex flex-col items-center justify-center text-center py-16 px-5;
+  }
+  .empty-state-title {
+    @apply text-lg font-semibold mt-4 mb-1.5;
+  }
+  .empty-state-subtitle {
+    @apply text-sm max-w-xs;
+    color: var(--text-secondary);
+  }
+
+  /* Cart / Checkout Drawer */
+  .cart-drawer-card {
+    @apply rounded-lg p-4 mb-5;
+    border: 1px solid var(--glass-border);
+    background: #fafafa;
+  }
+  .cart-item-row {
+    @apply flex items-center justify-between py-2.5;
+    border-bottom: 1px dashed var(--glass-border);
+  }
+  .cart-item-row:last-child {
+    border-bottom: none;
+  }
+  .cart-item-info {
+    @apply flex flex-col;
+  }
+  .cart-item-name {
+    @apply font-semibold text-sm;
+  }
+  .cart-item-sku {
+    @apply text-xs;
+    font-family: var(--font-mono);
+    color: var(--text-muted);
+  }
+  .cart-item-qty-selector {
+    @apply flex items-center gap-2.5;
+  }
+  .qty-btn {
+    @apply flex items-center justify-center cursor-pointer transition-all;
+    background: none;
+    border: 1px solid var(--glass-border);
+    border-radius: 50%;
+    width: 24px;
+    height: 24px;
+    color: var(--text-secondary);
+  }
+  .qty-btn:hover:not(:disabled) {
+    background: #fff;
+    border-color: var(--glass-border-hover);
+    color: var(--text-primary);
+  }
+  .qty-btn:disabled {
+    opacity: 0.4;
+    cursor: not-allowed;
+  }
+  .qty-val {
+    @apply font-semibold text-sm text-center;
+    width: 16px;
+  }
 }
 
 /* Skeleton Loading Animation */
@@ -141,4 +285,15 @@
   animation: shimmer 2s infinite linear;
   background: linear-gradient(to right, #f6f7f8 4%, #edeef1 25%, #f6f7f8 36%);
   background-size: 1000px 100%;
+}
+
+/* Modal Animations */
+@keyframes fadeIn {
+  0% { opacity: 0; }
+  100% { opacity: 1; }
+}
+
+@keyframes slideUp {
+  0% { transform: translateY(8px); opacity: 0; }
+  100% { transform: translateY(0); opacity: 1; }
 }

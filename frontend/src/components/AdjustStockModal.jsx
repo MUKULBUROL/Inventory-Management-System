@@ -1,4 +1,5 @@
 import React, { useState } from 'react';
+import { createPortal } from 'react-dom';
 import { useMutation, useQueryClient } from '@tanstack/react-query';
 import { inventoryApi } from '../api';
 import { X } from 'lucide-react';
@@ -37,7 +38,7 @@ const AdjustStockModal = ({ isOpen, onClose, product, addToast }) => {
     });
   };
 
-  return (
+  return createPortal(
     <div className="modal-overlay" onClick={onClose}>
       <div className="modal-content" onClick={e => e.stopPropagation()}>
         <div className="modal-header">
@@ -91,7 +92,8 @@ const AdjustStockModal = ({ isOpen, onClose, product, addToast }) => {
           </div>
         </form>
       </div>
-    </div>
+    </div>,
+    document.body
   );
 };
 

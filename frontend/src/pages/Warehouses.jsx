@@ -2,7 +2,7 @@ import React from 'react';
 import { Building2, MapPin, Package, AlertTriangle } from 'lucide-react';
 import { Helmet } from 'react-helmet-async';
 
-const Warehouses = () => {
+const Warehouses = ({ addToast }) => {
   // Mock data for V2 demo
   const warehouses = [
     {
@@ -34,10 +34,16 @@ const Warehouses = () => {
     }
   ];
 
+  const handleMockClick = () => {
+    if (addToast) {
+      addToast('This feature is slated for Phase 2.', 'info');
+    }
+  };
+
   return (
     <div className="p-8 max-w-7xl mx-auto pb-20">
       <Helmet>
-        <title>Warehouses - Quantum OS</title>
+        <title>Warehouses - Quantum Inventory System</title>
       </Helmet>
       
       <div className="page-header">
@@ -45,7 +51,7 @@ const Warehouses = () => {
           <h1>Facility Management</h1>
           <p>Monitor multi-warehouse capacity and distribution operations.</p>
         </div>
-        <button className="btn btn-primary">
+        <button className="btn btn-primary" onClick={handleMockClick}>
           Add Facility
         </button>
       </div>
@@ -90,7 +96,10 @@ const Warehouses = () => {
                   <Package className="w-4 h-4 mr-2 text-gray-400" />
                   {wh.itemCount.toLocaleString()} items
                 </div>
-                <button className="text-sm font-semibold text-indigo-600 hover:text-indigo-800 transition-colors">
+                <button 
+                  className="text-sm font-semibold text-indigo-600 hover:text-indigo-800 transition-colors"
+                  onClick={handleMockClick}
+                >
                   View Layout &rarr;
                 </button>
               </div>

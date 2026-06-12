@@ -11,7 +11,7 @@ class Settings(BaseSettings):
     PROJECT_NAME: str = "Inventory & Order Management System"
     API_V1_STR: str = "/api/v1"
     
-    SECRET_KEY: str = os.getenv("SECRET_KEY", "b39afca0239401ab039401ab039401ab039401ab039401ab039401ab039401ab")
+    SECRET_KEY: str = os.getenv("SECRET_KEY")
     ALGORITHM: str = "HS256"
     ACCESS_TOKEN_EXPIRE_MINUTES: int = 60 * 24 * 8  # 8 days
     

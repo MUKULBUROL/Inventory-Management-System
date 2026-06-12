@@ -1,4 +1,5 @@
 import React from 'react';
+import { createPortal } from 'react-dom';
 import { useQuery } from '@tanstack/react-query';
 import { inventoryApi } from '../api';
 import { X, ArrowUpRight, ArrowDownRight, PackageMinus, PackagePlus, RefreshCw, ShoppingCart } from 'lucide-react';
@@ -28,7 +29,7 @@ const ProductLedgerModal = ({ isOpen, onClose, product }) => {
     return type.replace('Stock', '');
   };
 
-  return (
+  return createPortal(
     <div className="modal-overlay" onClick={onClose}>
       <div className="modal-content !max-w-3xl !max-h-[80vh]" onClick={e => e.stopPropagation()}>
         <div className="modal-header bg-gray-50/80">
@@ -79,7 +80,8 @@ const ProductLedgerModal = ({ isOpen, onClose, product }) => {
           )}
         </div>
       </div>
-    </div>
+    </div>,
+    document.body
   );
 };
 

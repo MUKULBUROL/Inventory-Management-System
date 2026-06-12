@@ -10,10 +10,13 @@ const CommandPalette = ({ isOpen, setIsOpen, navigate }) => {
         e.preventDefault();
         setIsOpen((open) => !open);
       }
+      if (e.key === 'Escape' && isOpen) {
+        setIsOpen(false);
+      }
     };
     document.addEventListener('keydown', down);
     return () => document.removeEventListener('keydown', down);
-  }, [setIsOpen]);
+  }, [setIsOpen, isOpen]);
 
   if (!isOpen) return null;
 

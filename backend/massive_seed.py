@@ -45,17 +45,42 @@ def generate_massive_data():
         db.commit()
         print("Customers seeded.")
 
+        # Setup/verify default warehouse
+        from app.models.warehouse import Warehouse
+        from app.models.inventory_event import InventoryEvent, EventType
+        wh = db.query(Warehouse).first()
+        if not wh:
+            wh = Warehouse(name="Main Warehouse", location="HQ")
+            db.add(wh)
+            db.commit()
+
         print(f"Generating {NUM_PRODUCTS} products...")
         products = []
+        events = []
         for i in range(NUM_PRODUCTS):
+            p_id = str(uuid.uuid4())
+            qty = random.randint(500, 5000)
             products.append(
                 Product(
-                    id=str(uuid.uuid4()),
+                    id=p_id,
                     name=f"Dummy Product {i} {uuid.uuid4().hex[:4]}",
                     sku=f"SKU-{uuid.uuid4().hex[:10]}",
                     price=Decimal(f"{random.uniform(10.0, 500.0):.2f}"),
-                    quantity=random.randint(500, 5000), # Very high stock
                     created_at=datetime.datetime.utcnow()
+                )
+            )
+            # Create corresponding inventory event mapping initial stock receipt
+            events.append(
+                InventoryEvent(
+                    id=str(uuid.uuid4()),
+                    product_id=p_id,
+                    warehouse_id=wh.id,
+                    event_type=EventType.STOCK_RECEIVED,
+                    quantity_change=qty,
+                    before_value=0,
+                    after_value=qty,
+                    reason="Initial Seeding Stock",
+                    timestamp=datetime.datetime.utcnow()
                 )
             )
             
@@ -63,6 +88,13 @@ def generate_massive_data():
             db.bulk_save_objects(products[i:i+chunk_size])
         db.commit()
         print("Products seeded.")
+
+        print(f"Generating and bulk saving stock ledger events...")
+        for i in range(0, len(events), chunk_size):
+            db.bulk_save_objects(events[i:i+chunk_size])
+        db.commit()
+        print("Stock ledger seeded.")
+
 
         print(f"Generating {NUM_ORDERS} orders and items...")
         

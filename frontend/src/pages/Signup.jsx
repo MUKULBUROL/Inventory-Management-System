@@ -31,8 +31,8 @@ const Signup = ({ setCurrentPage, addToast }) => {
   return (
     <div className="flex items-center justify-center min-h-screen bg-gray-50 px-4">
       <Helmet>
-        <title>Sign Up - Quantum Inventory</title>
-        <meta name="description" content="Create a new Quantum Inventory account." />
+        <title>Sign Up - Quantum Inventory System</title>
+        <meta name="description" content="Create a new Quantum Inventory System account." />
       </Helmet>
       <div className="w-full max-w-md p-8 bg-white rounded-xl shadow-lg border border-gray-100">
         <div className="flex flex-col items-center mb-8">
@@ -40,7 +40,7 @@ const Signup = ({ setCurrentPage, addToast }) => {
             <Boxes className="w-8 h-8 text-indigo-600" />
           </div>
           <h2 className="text-2xl font-bold text-gray-900">Create Account</h2>
-          <p className="text-gray-500 mt-2">Join Quantum Systems</p>
+          <p className="text-gray-500 mt-2">Join Quantum Inventory System</p>
         </div>
         
         <form onSubmit={handleSubmit} className="space-y-6">

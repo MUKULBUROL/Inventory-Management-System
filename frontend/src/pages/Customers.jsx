@@ -1,14 +1,27 @@
 import React, { useState, useEffect } from 'react';
+import { createPortal } from 'react-dom';
+import { useQuery, useMutation, useQueryClient, keepPreviousData } from '@tanstack/react-query';
 import { customerApi } from '../api';
 import { Plus, Search, Trash2, X, Users, Mail, Phone, Calendar } from 'lucide-react';
 import ConfirmationModal from '../components/layout/ConfirmationModal';
 import { Helmet } from 'react-helmet-async';
 
 const Customers = ({ addToast }) => {
-  const [customers, setCustomers] = useState([]);
-  const [loading, setLoading] = useState(true);
   const [searchTerm, setSearchTerm] = useState('');
-  
+  const [debouncedSearch, setDebouncedSearch] = useState('');
+  const queryClient = useQueryClient();
+
+  useEffect(() => {
+    const timer = setTimeout(() => setDebouncedSearch(searchTerm), 300);
+    return () => clearTimeout(timer);
+  }, [searchTerm]);
+
+  const { data: customers = [], isLoading: loading, isFetching } = useQuery({
+    queryKey: ['customers', debouncedSearch],
+    queryFn: () => customerApi.getAll(debouncedSearch),
+    placeholderData: keepPreviousData,
+  });
+
   // Modals state
   const [isCreateOpen, setIsCreateOpen] = useState(false);
   const [confirmDeleteOpen, setConfirmDeleteOpen] = useState(false);
@@ -16,25 +29,6 @@ const Customers = ({ addToast }) => {
   
   const [form, setForm] = useState({ name: '', email: '', phone: '' });
   const [formErrors, setFormErrors] = useState({});
-
-  const fetchCustomers = async (search = '') => {
-    setLoading(true);
-    try {
-      const data = await customerApi.getAll(search);
-      setCustomers(data);
-    } catch (err) {
-      addToast('Failed to fetch customers.', 'error');
-    } finally {
-      setLoading(false);
-    }
-  };
-
-  useEffect(() => {
-    const delayDebounce = setTimeout(() => {
-      fetchCustomers(searchTerm);
-    }, 300);
-    return () => clearTimeout(delayDebounce);
-  }, [searchTerm]);
 
   const handleOpenCreate = () => {
     setForm({ name: '', email: '', phone: '' });
@@ -66,7 +60,7 @@ const Customers = ({ addToast }) => {
       });
       addToast('Customer profile created successfully!', 'success');
       setIsCreateOpen(false);
-      fetchCustomers(searchTerm);
+      queryClient.invalidateQueries(['customers']);
     } catch (err) {
       const msg = err.response?.data?.detail || 'Failed to register customer.';
       addToast(msg, 'error');
@@ -85,7 +79,7 @@ const Customers = ({ addToast }) => {
       addToast('Customer account deleted.', 'success');
       setConfirmDeleteOpen(false);
       setCustomerToDelete(null);
-      fetchCustomers(searchTerm);
+      queryClient.invalidateQueries(['customers']);
     } catch (err) {
       const msg = err.response?.data?.detail || 'Failed to delete customer profile.';
       addToast(msg, 'error');
@@ -96,9 +90,9 @@ const Customers = ({ addToast }) => {
   return (
     <div className="p-8 bg-gray-50 min-h-screen font-sans">
       <Helmet>
-        <title>Customers - Quantum Inventory</title>
+        <title>Customers - Quantum Inventory System</title>
         <meta name="description" content="Manage client profiles and view contact information." />
-        <meta property="og:title" content="Customers - Quantum Inventory" />
+        <meta property="og:title" content="Customers - Quantum Inventory System" />
       </Helmet>
       <div className="page-header">
         <div className="page-title-group">
@@ -112,7 +106,7 @@ const Customers = ({ addToast }) => {
       </div>
 
       <div className="search-bar-container">
-        <div className="search-input-wrapper">
+        <div className="search-input-wrapper" style={{ maxWidth: '420px', position: 'relative' }}>
           <Search className="search-icon" />
           <input
             type="text"
@@ -121,6 +115,11 @@ const Customers = ({ addToast }) => {
             value={searchTerm}
             onChange={(e) => setSearchTerm(e.target.value)}
           />
+          {isFetching && (
+            <div className="absolute right-3 top-1/2 -translate-y-1/2">
+              <div className="w-3.5 h-3.5 rounded-full border-2 border-gray-300 border-t-indigo-500 animate-spin" />
+            </div>
+          )}
         </div>
       </div>
 
@@ -129,7 +128,7 @@ const Customers = ({ addToast }) => {
           <div className="animate-spin" style={{ width: '40px', height: '40px', border: '3px solid #ebebeb', borderTopColor: 'var(--color-primary)', borderRadius: '50%' }}></div>
         </div>
       ) : (
-        <div className="glass-panel">
+      <div className={`glass-panel transition-opacity duration-150 ${isFetching ? 'opacity-70' : 'opacity-100'}`}>
           {customers.length === 0 ? (
             <div className="empty-state">
               <Users size={40} style={{ color: 'var(--text-muted)' }} />
@@ -174,7 +173,7 @@ const Customers = ({ addToast }) => {
       )}
 
       {/* REGISTER MODAL */}
-      {isCreateOpen && (
+      {isCreateOpen && createPortal(
         <div className="modal-overlay" onClick={() => setIsCreateOpen(false)}>
           <div className="modal-content" onClick={(e) => e.stopPropagation()}>
             <div className="modal-header">
@@ -222,7 +221,8 @@ const Customers = ({ addToast }) => {
               </div>
             </form>
           </div>
-        </div>
+        </div>,
+        document.body
       )}
 
       {/* CONFIRM DELETE MODAL */}

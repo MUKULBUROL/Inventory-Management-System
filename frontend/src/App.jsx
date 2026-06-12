@@ -5,6 +5,7 @@ import Products from './pages/Products';
 import Warehouses from './pages/Warehouses';
 import Customers from './pages/Customers';
 import Orders from './pages/Orders';
+import NotFound from './pages/NotFound';
 import { Menu, Boxes } from 'lucide-react';
 import CommandPalette from './components/CommandPalette';
 import { motion, AnimatePresence } from 'framer-motion';
@@ -96,7 +97,7 @@ function AppContent() {
       case 'orders':
         return <Orders addToast={addToast} key="orders" />;
       default:
-        return <Dashboard addToast={addToast} key="dashboard" />;
+        return <NotFound key="notfound" />;
     }
   };
 
@@ -113,6 +114,7 @@ function AppContent() {
         <button 
           className="p-2 text-muted-foreground hover:bg-gray-100 rounded-md focus:outline-none" 
           onClick={() => setIsSidebarOpen(true)}
+          aria-label="Toggle Navigation Menu"
         >
           <Menu className="w-6 h-6" />
         </button>

@@ -7,10 +7,9 @@ __pycache__/
 *.pyc
 .env
 .pytest_cache/
-AGENTS.md
 DESIGN.md
-CLAUDE.md
-GEMINI.md
 .vscode/
 .env.local
 .env.*.local
+test-results/
+frontend/.vite/

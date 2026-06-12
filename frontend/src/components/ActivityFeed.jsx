@@ -43,7 +43,7 @@ const ActivityFeed = () => {
   }, []);
 
   return (
-    <div className="surface-card p-6 h-full flex flex-col">
+    <div className="surface-card p-6 h-full flex flex-col transition-all duration-300 hover:-translate-y-1.5 hover:shadow-[0_0_30px_rgba(217,70,239,0.3)] hover:bg-gradient-to-br hover:from-fuchsia-50 hover:to-pink-50 hover:border-fuchsia-300">
       <div className="flex justify-between items-center mb-6">
         <h3 className="text-lg font-semibold tracking-tight">Live Activity Feed</h3>
         <div className="flex items-center gap-2">

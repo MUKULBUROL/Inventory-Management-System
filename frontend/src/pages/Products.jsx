@@ -1,5 +1,6 @@
 import React, { useState, useRef, useEffect } from 'react';
-import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
+import { createPortal } from 'react-dom';
+import { useQuery, useMutation, useQueryClient, keepPreviousData } from '@tanstack/react-query';
 import { productApi } from '../api';
 import { Plus, Search, Edit2, Trash2, X, Package, Activity, ArrowRightLeft } from 'lucide-react';
 import ConfirmationModal from '../components/layout/ConfirmationModal';
@@ -19,9 +20,10 @@ const Products = ({ addToast }) => {
     return () => clearTimeout(timer);
   }, [searchTerm]);
 
-  const { data: products = [], isLoading } = useQuery({
+  const { data: products = [], isLoading, isFetching } = useQuery({
     queryKey: ['products', debouncedSearch],
     queryFn: () => productApi.getAll(debouncedSearch),
+    placeholderData: keepPreviousData,
   });
 
   // Virtualizer Setup
@@ -120,7 +122,7 @@ const Products = ({ addToast }) => {
   return (
     <div className="p-8 max-w-[1400px] mx-auto pb-20">
       <Helmet>
-        <title>Products - Quantum OS</title>
+        <title>Products - Quantum Inventory System</title>
       </Helmet>
       
       <div className="page-header">
@@ -151,7 +153,7 @@ const Products = ({ addToast }) => {
         </div>
       </div>
 
-      <div className="surface-card flex flex-col min-h-[500px]">
+      <div className="surface-card flex flex-col min-h-[500px] relative">
         {isLoading ? (
           <div className="p-4 space-y-4">
             <SkeletonLoader variant="table-row" />
@@ -166,7 +168,14 @@ const Products = ({ addToast }) => {
             <p className="empty-state-subtitle">Adjust your search or add a new product to the catalog.</p>
           </div>
         ) : (
-          <div className="flex-1 overflow-auto rounded-xl" ref={parentRef} style={{ height: '600px' }}>
+          <>
+            {isFetching && (
+              <div className="absolute top-3 right-4 z-20 flex items-center gap-2">
+                <div className="w-3.5 h-3.5 rounded-full border-2 border-gray-300 border-t-indigo-500 animate-spin" />
+                <span className="text-xs text-gray-400 font-medium">Searching...</span>
+              </div>
+            )}
+          <div className={`flex-1 overflow-auto rounded-xl transition-opacity duration-150 ${isFetching ? 'opacity-60' : 'opacity-100'}`} ref={parentRef} style={{ height: '600px' }}>
             <table className="custom-table w-full">
               <thead className="sticky top-0 z-10">
                 <tr>
@@ -236,11 +245,12 @@ const Products = ({ addToast }) => {
               </tbody>
             </table>
           </div>
+          </>
         )}
       </div>
 
       {/* CREATE MODAL */}
-      {isCreateOpen && (
+      {isCreateOpen && createPortal(
         <div className="modal-overlay" onClick={() => setIsCreateOpen(false)}>
           <div className="modal-content" onClick={e => e.stopPropagation()}>
             <div className="modal-header">
@@ -273,11 +283,12 @@ const Products = ({ addToast }) => {
               </div>
             </form>
           </div>
-        </div>
+        </div>,
+        document.body
       )}
 
       {/* EDIT MODAL */}
-      {isEditOpen && (
+      {isEditOpen && createPortal(
         <div className="modal-overlay" onClick={() => setIsEditOpen(false)}>
           <div className="modal-content" onClick={e => e.stopPropagation()}>
             <div className="modal-header">
@@ -307,7 +318,8 @@ const Products = ({ addToast }) => {
               </div>
             </form>
           </div>
-        </div>
+        </div>,
+        document.body
       )}
 
       <ConfirmationModal

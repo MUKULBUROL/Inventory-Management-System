@@ -1,4 +1,5 @@
 import React, { useState, useEffect } from 'react';
+import { createPortal } from 'react-dom';
 import { orderApi, customerApi, productApi } from '../api';
 import { Plus, Search, Trash2, Eye, X, ShoppingCart, PlusCircle, MinusCircle, Package, ArrowRight, User } from 'lucide-react';
 import ConfirmationModal from '../components/layout/ConfirmationModal';
@@ -24,7 +25,6 @@ const Orders = ({ addToast }) => {
   // Form states for Create Order
   const [customerId, setCustomerId] = useState('');
   const [selectedItems, setSelectedItems] = useState([]); // Array of { product_id, quantity, details }
-  const [productSearch, setProductSearch] = useState('');
   const [formErrors, setFormErrors] = useState({});
 
   const fetchData = async () => {
@@ -52,14 +52,13 @@ const Orders = ({ addToast }) => {
   const handleOpenCreate = () => {
     setCustomerId('');
     setSelectedItems([]);
-    setProductSearch('');
     setFormErrors({});
     setIsCreateOpen(true);
   };
 
   // Fast add product to cart (defaults to 1 quantity or increments existing)
   const handleAddProduct = (product) => {
-    if (product.quantity <= 0) {
+    if (product.available_stock <= 0) {
       addToast(`Product '${product.name}' is out of stock.`, 'warning');
       return;
     }
@@ -68,8 +67,8 @@ const Orders = ({ addToast }) => {
 
     if (existingIndex > -1) {
       const currentQty = selectedItems[existingIndex].quantity;
-      if (currentQty >= product.quantity) {
-        addToast(`Cannot add more. Only ${product.quantity} units are available in stock.`, 'warning');
+      if (currentQty >= product.available_stock) {
+        addToast(`Cannot add more. Only ${product.available_stock} units are available in stock.`, 'warning');
         return;
       }
       const updated = [...selectedItems];
@@ -99,8 +98,8 @@ const Orders = ({ addToast }) => {
       return;
     }
 
-    if (newQty > item.details.quantity) {
-      addToast(`Only ${item.details.quantity} units are available in stock.`, 'warning');
+    if (newQty > item.details.available_stock) {
+      addToast(`Only ${item.details.available_stock} units are available in stock.`, 'warning');
       return;
     }
 
@@ -124,10 +123,10 @@ const Orders = ({ addToast }) => {
       return;
     }
 
-    if (val > item.details.quantity) {
-      addToast(`Only ${item.details.quantity} units are available in stock.`, 'warning');
+    if (val > item.details.available_stock) {
+      addToast(`Only ${item.details.available_stock} units are available in stock.`, 'warning');
       const updated = [...selectedItems];
-      updated[index].quantity = item.details.quantity;
+      updated[index].quantity = item.details.available_stock;
       setSelectedItems(updated);
       return;
     }
@@ -231,18 +230,12 @@ const Orders = ({ addToast }) => {
     }
   };
 
-  // Filter products by search query inside the modal
-  const filteredProducts = products.filter(p => 
-    p.name.toLowerCase().includes(productSearch.toLowerCase()) ||
-    p.sku.toLowerCase().includes(productSearch.toLowerCase())
-  );
-
   return (
     <div className="p-8 bg-gray-50 min-h-screen font-sans">
       <Helmet>
-        <title>Sales Orders - Quantum Inventory</title>
+        <title>Sales Orders - Quantum Inventory System</title>
         <meta name="description" content="Manage customer sales orders and view invoices." />
-        <meta property="og:title" content="Sales Orders - Quantum Inventory" />
+        <meta property="og:title" content="Sales Orders - Quantum Inventory System" />
       </Helmet>
       <div className="page-header">
         <div className="page-title-group">
@@ -326,7 +319,7 @@ const Orders = ({ addToast }) => {
       )}
 
       {/* CREATE ORDER MODAL */}
-      {isCreateOpen && (
+      {isCreateOpen && createPortal(
         <div className="modal-overlay" onClick={() => setIsCreateOpen(false)}>
           <div className="modal-content" style={{ maxWidth: '850px', width: '90%' }} onClick={(e) => e.stopPropagation()}>
             <div className="modal-header">
@@ -355,59 +348,25 @@ const Orders = ({ addToast }) => {
 
               <div style={{ display: 'grid', gridTemplateColumns: '1.2fr 1fr', gap: '24px', marginTop: '20px' }}>
                 
-                {/* Product Catalog search */}
+                {/* Product Catalog Dropdown */}
                 <div>
                   <label className="form-label">Catalog Products</label>
-                  <div className="search-input-wrapper" style={{ marginBottom: '12px' }}>
-                    <Search className="search-icon" />
-                    <input
-                      type="text"
-                      className="form-control search-input"
-                      placeholder="Search catalog by name/SKU..."
-                      value={productSearch}
-                      onChange={(e) => setProductSearch(e.target.value)}
-                    />
-                  </div>
-                  
-                  <div style={{ maxHeight: '250px', overflowY: 'auto', border: '1px solid var(--glass-border)', borderRadius: '6px', background: '#ffffff' }}>
-                    {filteredProducts.length === 0 ? (
-                      <div style={{ padding: '16px', textAlign: 'center', color: 'var(--text-muted)', fontSize: '0.875rem' }}>
-                        No items match search filter.
-                      </div>
-                    ) : (
-                      filteredProducts.map(p => (
-                        <div 
-                          key={p.id} 
-                          onClick={() => handleAddProduct(p)}
-                          style={{ 
-                            display: 'flex', 
-                            justifyContent: 'space-between', 
-                            alignItems: 'center', 
-                            padding: '10px 14px', 
-                            borderBottom: '1px solid var(--glass-border)',
-                            cursor: p.quantity > 0 ? 'pointer' : 'not-allowed',
-                            background: p.quantity <= 0 ? '#fafafa' : 'transparent',
-                            opacity: p.quantity <= 0 ? 0.6 : 1
-                          }}
-                          className="catalog-product-row"
-                        >
-                          <div>
-                            <div style={{ fontWeight: 600, fontSize: '0.85rem' }}>{p.name}</div>
-                            <div style={{ fontSize: '0.7rem', color: 'var(--text-muted)', fontFamily: 'var(--font-mono)' }}>{p.sku}</div>
-                          </div>
-                          <div style={{ textAlign: 'right', display: 'flex', alignItems: 'center', gap: '10px' }}>
-                            <span style={{ fontSize: '0.85rem', fontWeight: 600 }}>${parseFloat(p.price).toFixed(2)}</span>
-                            {p.quantity <= 0 ? (
-                              <span className="badge badge-danger">Out</span>
-                            ) : p.quantity < 10 ? (
-                              <span className="badge badge-warning">{p.quantity} left</span>
-                            ) : (
-                              <span className="badge badge-success">{p.quantity} stock</span>
-                            )}
-                          </div>
-                        </div>
-                      ))
-                    )}
+                  <div style={{ marginBottom: '12px' }}>
+                    <select
+                      className="form-control"
+                      onChange={(e) => {
+                        const p = products.find(prod => prod.id === e.target.value);
+                        if (p) handleAddProduct(p);
+                        e.target.value = ""; // Reset after selection
+                      }}
+                    >
+                      <option value="">-- Select Product to Add --</option>
+                      {products.map(p => (
+                        <option key={p.id} value={p.id} disabled={p.available_stock <= 0}>
+                          {p.name} ({p.sku}) — ${parseFloat(p.price).toFixed(2)} {p.available_stock <= 0 ? '(Out of stock)' : `· ${p.available_stock} in stock`}
+                        </option>
+                      ))}
+                    </select>
                   </div>
                 </div>
 
@@ -420,7 +379,7 @@ const Orders = ({ addToast }) => {
                       <div style={{ flexGrow: 1, display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', color: 'var(--text-muted)', padding: '20px 0' }}>
                         <ShoppingCart size={32} style={{ marginBottom: '8px' }} />
                         <span style={{ fontSize: '0.85rem' }}>Your invoice list is empty</span>
-                        <span style={{ fontSize: '0.75rem', textAlign: 'center' }}>Click products on the left catalog to add them.</span>
+                        <span style={{ fontSize: '0.75rem', textAlign: 'center' }}>Select products from the dropdown above to add them.</span>
                       </div>
                     ) : (
                       <div style={{ flexGrow: 1 }}>
@@ -461,7 +420,7 @@ const Orders = ({ addToast }) => {
                                 type="button" 
                                 className="qty-btn" 
                                 onClick={() => handleUpdateQty(idx, 1)}
-                                disabled={item.quantity >= item.details.quantity}
+                                disabled={item.quantity >= item.details.available_stock}
                               >
                                 <PlusCircle size={15} />
                               </button>
@@ -500,11 +459,12 @@ const Orders = ({ addToast }) => {
               </div>
             </form>
           </div>
-        </div>
+        </div>,
+        document.body
       )}
 
       {/* VIEW DETAILS MODAL */}
-      {isDetailsOpen && selectedOrder && (
+      {isDetailsOpen && selectedOrder && createPortal(
         <div className="modal-overlay" onClick={() => setIsDetailsOpen(false)}>
           <div className="modal-content" style={{ maxWidth: '650px' }} onClick={(e) => e.stopPropagation()}>
             <div className="modal-header">
@@ -580,7 +540,8 @@ const Orders = ({ addToast }) => {
               <button className="btn btn-secondary" onClick={() => setIsDetailsOpen(false)}>Close Invoice</button>
             </div>
           </div>
-        </div>
+        </div>,
+        document.body
       )}
 
       {/* CONFIRM DELETE MODAL */}

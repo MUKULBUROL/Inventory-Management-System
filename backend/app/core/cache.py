@@ -49,11 +49,15 @@ def cache_response(ttl_seconds: int = 5):
             try:
                 # Store in cache
                 if isinstance(result, dict):
-                    # For dashboard response we can serialize dict to json
-                    await redis_client.set(cache_key, json.dumps(result), ex=ttl_seconds)
+                    # For dashboard response we use fastapi's jsonable_encoder to convert datetime 
+                    # and Decimal objects to basic JSON-compatible Python types before serialization.
+                    from fastapi.encoders import jsonable_encoder
+                    serialized_data = jsonable_encoder(result)
+                    await redis_client.set(cache_key, json.dumps(serialized_data), ex=ttl_seconds)
             except Exception as e:
                 logger.warning(f"Redis cache write error: {e}")
                 
             return result
         return wrapper
     return decorator
+

@@ -35,7 +35,7 @@ const Dashboard = ({ addToast }) => {
   return (
     <div className="p-8 pb-20 max-w-7xl mx-auto">
       <Helmet>
-        <title>Dashboard - Quantum OS</title>
+        <title>Dashboard - Quantum Inventory System</title>
         <meta name="description" content="View real-time analytics and inventory performance." />
       </Helmet>
       
@@ -56,53 +56,53 @@ const Dashboard = ({ addToast }) => {
           </>
         ) : (
           <>
-            <div className="surface-card p-6 flex flex-col justify-between hover:border-gray-300 transition-colors cursor-default">
+            <div className="surface-card p-6 flex flex-col justify-between cursor-default group transition-all duration-300 hover:-translate-y-1.5 hover:shadow-[0_12px_40px_-12px_rgba(16,185,129,0.6)] hover:bg-gradient-to-br hover:from-emerald-400 hover:to-emerald-600 hover:border-emerald-400">
               <div className="flex justify-between items-start">
-                <span className="text-sm font-semibold text-gray-500 uppercase tracking-wider">Inventory Value</span>
-                <div className="p-2 bg-emerald-50 rounded-lg">
-                  <DollarSign className="w-5 h-5 text-emerald-600" />
+                <span className="text-sm font-semibold text-gray-500 uppercase tracking-wider group-hover:text-emerald-50 transition-colors">Inventory Value</span>
+                <div className="p-2 bg-emerald-50 rounded-lg group-hover:bg-white/20 transition-colors">
+                  <DollarSign className="w-5 h-5 text-emerald-600 group-hover:text-white transition-colors" />
                 </div>
               </div>
               <div className="mt-4 flex items-baseline gap-2">
-                <span className="text-3xl font-bold tracking-tight">${stats?.inventory_value?.toLocaleString(undefined, {minimumFractionDigits: 2, maximumFractionDigits: 2})}</span>
+                <span className="text-3xl font-bold tracking-tight text-gray-900 group-hover:text-white transition-colors">${stats?.inventory_value?.toLocaleString(undefined, {minimumFractionDigits: 2, maximumFractionDigits: 2})}</span>
               </div>
             </div>
 
-            <div className="surface-card p-6 flex flex-col justify-between hover:border-gray-300 transition-colors cursor-default">
+            <div className="surface-card p-6 flex flex-col justify-between cursor-default group transition-all duration-300 hover:-translate-y-1.5 hover:shadow-[0_12px_40px_-12px_rgba(59,130,246,0.6)] hover:bg-gradient-to-br hover:from-blue-400 hover:to-indigo-600 hover:border-blue-400">
               <div className="flex justify-between items-start">
-                <span className="text-sm font-semibold text-gray-500 uppercase tracking-wider">Health Score</span>
-                <div className="p-2 bg-blue-50 rounded-lg">
-                  <Activity className="w-5 h-5 text-blue-600" />
+                <span className="text-sm font-semibold text-gray-500 uppercase tracking-wider group-hover:text-blue-50 transition-colors">Health Score</span>
+                <div className="p-2 bg-blue-50 rounded-lg group-hover:bg-white/20 transition-colors">
+                  <Activity className="w-5 h-5 text-blue-600 group-hover:text-white transition-colors" />
                 </div>
               </div>
               <div className="mt-4 flex items-baseline gap-2">
-                <span className="text-3xl font-bold tracking-tight">{stats?.inventory_health_score}/100</span>
-                <span className="text-sm font-medium text-blue-600">Healthy</span>
+                <span className="text-3xl font-bold tracking-tight text-gray-900 group-hover:text-white transition-colors">{stats?.inventory_health_score}/100</span>
+                <span className="text-sm font-medium text-blue-600 group-hover:text-blue-100 transition-colors">Healthy</span>
               </div>
             </div>
 
-            <div className="surface-card p-6 flex flex-col justify-between hover:border-gray-300 transition-colors cursor-default">
+            <div className="surface-card p-6 flex flex-col justify-between cursor-default group transition-all duration-300 hover:-translate-y-1.5 hover:shadow-[0_12px_40px_-12px_rgba(245,158,11,0.6)] hover:bg-gradient-to-br hover:from-amber-400 hover:to-orange-500 hover:border-amber-400">
               <div className="flex justify-between items-start">
-                <span className="text-sm font-semibold text-gray-500 uppercase tracking-wider">Dead Stock</span>
-                <div className="p-2 bg-amber-50 rounded-lg">
-                  <Package className="w-5 h-5 text-amber-600" />
+                <span className="text-sm font-semibold text-gray-500 uppercase tracking-wider group-hover:text-amber-50 transition-colors">Dead Stock</span>
+                <div className="p-2 bg-amber-50 rounded-lg group-hover:bg-white/20 transition-colors">
+                  <Package className="w-5 h-5 text-amber-600 group-hover:text-white transition-colors" />
                 </div>
               </div>
               <div className="mt-4 flex items-baseline gap-2">
-                <span className="text-3xl font-bold tracking-tight">${stats?.dead_stock_value?.toLocaleString(undefined, {minimumFractionDigits: 2, maximumFractionDigits: 2})}</span>
+                <span className="text-3xl font-bold tracking-tight text-gray-900 group-hover:text-white transition-colors">${stats?.dead_stock_value?.toLocaleString(undefined, {minimumFractionDigits: 2, maximumFractionDigits: 2})}</span>
               </div>
             </div>
 
-            <div className="surface-card p-6 flex flex-col justify-between hover:border-gray-300 transition-colors cursor-default">
+            <div className="surface-card p-6 flex flex-col justify-between cursor-default group transition-all duration-300 hover:-translate-y-1.5 hover:shadow-[0_12px_40px_-12px_rgba(168,85,247,0.6)] hover:bg-gradient-to-br hover:from-purple-400 hover:to-fuchsia-500 hover:border-purple-400">
               <div className="flex justify-between items-start">
-                <span className="text-sm font-semibold text-gray-500 uppercase tracking-wider">Approvals</span>
-                <div className="p-2 bg-indigo-50 rounded-lg">
-                  <FileCheck2 className="w-5 h-5 text-indigo-600" />
+                <span className="text-sm font-semibold text-gray-500 uppercase tracking-wider group-hover:text-purple-50 transition-colors">Approvals</span>
+                <div className="p-2 bg-indigo-50 rounded-lg group-hover:bg-white/20 transition-colors">
+                  <FileCheck2 className="w-5 h-5 text-indigo-600 group-hover:text-white transition-colors" />
                 </div>
               </div>
               <div className="mt-4 flex items-baseline gap-2">
-                <span className="text-3xl font-bold tracking-tight">{stats?.pending_approvals}</span>
-                <span className="text-sm font-medium text-gray-500">Pending</span>
+                <span className="text-3xl font-bold tracking-tight text-gray-900 group-hover:text-white transition-colors">{stats?.pending_approvals}</span>
+                <span className="text-sm font-medium text-gray-500 group-hover:text-purple-100 transition-colors">Pending</span>
               </div>
             </div>
           </>
@@ -110,7 +110,7 @@ const Dashboard = ({ addToast }) => {
       </div>
 
       <div className="grid grid-cols-1 lg:grid-cols-3 gap-8 mb-8">
-        <div className="col-span-2 surface-card p-6">
+        <div className="col-span-2 surface-card p-6 transition-all duration-300 hover:-translate-y-1.5 hover:shadow-[0_0_30px_rgba(6,182,212,0.3)] hover:bg-gradient-to-br hover:from-cyan-50 hover:to-blue-50 hover:border-cyan-300">
           <div className="flex justify-between items-center mb-8">
             <h3 className="text-lg font-semibold tracking-tight">Sales & Forecasting</h3>
             <span className="badge badge-neutral">Next 30 Days</span>
@@ -130,7 +130,7 @@ const Dashboard = ({ addToast }) => {
           </div>
         </div>
 
-        <div className="col-span-1 surface-card overflow-hidden flex flex-col h-[400px]">
+        <div className="col-span-1 surface-card overflow-hidden flex flex-col h-[400px] transition-all duration-300 hover:-translate-y-1.5 hover:shadow-[0_0_30px_rgba(244,63,94,0.3)] hover:bg-gradient-to-br hover:from-rose-50 hover:to-red-50 hover:border-rose-300">
           <div className="p-6 border-b border-gray-100 flex justify-between items-center">
             <h3 className="text-lg font-semibold tracking-tight">Low Stock Alert</h3>
             {stats?.low_stock_products?.length > 0 && (
@@ -174,7 +174,7 @@ const Dashboard = ({ addToast }) => {
 
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-8 h-96">
         <ActivityFeed />
-        <div className="surface-card p-6 flex flex-col items-center justify-center text-center">
+        <div className="surface-card p-6 flex flex-col items-center justify-center text-center transition-all duration-300 hover:-translate-y-1.5 hover:shadow-[0_0_30px_rgba(16,185,129,0.3)] hover:bg-gradient-to-br hover:from-emerald-50 hover:to-teal-50 hover:border-emerald-300">
           <div className="w-16 h-16 bg-gray-50 rounded-full flex items-center justify-center mb-4 border border-gray-100">
             <Activity className="w-8 h-8 text-indigo-500" />
           </div>
