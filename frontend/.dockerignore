@@ -1,0 +1,12 @@
+node_modules/
+dist/
+.vite/
+.git/
+.github/
+.vscode/
+.env
+.env.local
+.env.development
+.env.production
+Dockerfile.dev
+nginx.conf
